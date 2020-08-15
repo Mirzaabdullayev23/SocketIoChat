@@ -13,7 +13,10 @@
     <div class="container">
         <p>Hello I'm from client part</p>
         <input type="text" class="inp2">
-        <button type="button" class="btn btn-danger">Click</button>
+        <button type="button" class="btn btn-success start">Enter</button>
+        <button type="button" class="btn btn-danger exit">Exit</button>
+        <div class="header_danger alert-danger"></div>
+        <div class="userCount"></div>
         <div class="connect"></div>
         <div class="text"></div>
     </div>
@@ -31,29 +34,57 @@
     <script src="http://localhost:3000/socket.io/socket.io.js"></script>
     <script>
         $(() => {
-            const socket = io.connect('http://localhost:3000/')
-            const $btn = $('button')
+            const socket = io.connect('http://localhost:3005/', {
+                reconnectionAttempts: 3,
+                reconnectionDelay: 500,
+                // reconnection: false
+            })
+            socket.on('reconnect_attempt', () => {
+                $('.header_danger').html(`Boshqatan harakat qil`);
+            })
+            socket.on('reconnect_error', () => {
+                $('.header_danger').html(`bog'lanish muvafiyaqatsiz`);
+            })
+            socket.on(('reconnect', () => {
+                $('.header_danger').html(`bo'g'landi`)
+            }))
+            const $btn = $('.start')
+            const $btn2 = $('.exit')
             const $text = $('.text')
             const $inp = $('.inp2')
-
-
-
-            // socket.on('catch', (data) => {
-            //     $text.html(`Hello I'm from ${data.city} city`)
-            // })
-
-
-            // $btn.on('click', () => {
-            //     socket.emit('SayHello', { name: 'Javlonbek', job: 'Coder' })
-            // })
+            const $userCount = $('.userCount')
 
             $btn.on('click', () => {
                 $('.connect').append(`<div class="alert alert-primary"> Connected`)
-                socket.emit('NewUser', { name: $inp.val() })
+                socket.emit('joinRoom', { name: $inp.val() })
+            })
+
+            $btn2.on('click', () => {
+                socket.emit('leaveRoom', { name: $inp.val() })
             })
 
             socket.on('user', (data) => {
                 $text.append(`<div class='alert alert-primary'> <b> ${data.name}</b>`)
+            })
+
+            socket.on('newJoin', (data) => {
+                // $('.connect').append('<div class="alert alert-info"> Somebody connected')
+                $userCount.html(`<div class="alert alert-danger"> There is ${data.count} people`)
+            })
+
+            socket.on('join', (data) => {
+                // $('.connect').append('<div class="alert alert-info"> Somebody connected')
+                $text.append(`<div class="alert alert-warning"> ${data.message} `)
+            })
+
+            socket.on('leaveRoom', (data) => {
+                // $('.connect').append('<div class="alert alert-info"> Somebody connected')
+                $userCount.html(`<div class="alert alert-danger"> There is ${data.count} people`)
+            })
+
+            socket.on('leaved', (data) => {
+                // $('.connect').append('<div class="alert alert-info"> Somebody connected')
+                $text.append(`<div class="alert alert-danger">  ${data.message} `)
             })
 
 
